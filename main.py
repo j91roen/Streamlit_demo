@@ -23,8 +23,8 @@ def calculate_diagnosis(data, RFE, symptom_duration):
     output_df = pd.DataFrame(
         np.array([['Pneumonia', 'Asthma', 'COPD','Diabetes', 'Bronchitis', 'Cardiac arrest','Embolism','Allergy','COVID','Influenza'],output]).T,
         columns=['diagnoses', 'probabilities'])
-    if st.checkbox('Sort diagnosis'):
-        output_df = output_df.sort_values(by=['probabilities'])
+    #if st.checkbox('Sort diagnosis'):
+    output_df = output_df.sort_values(by=['probabilities'])
 
     prior_probabilities = np.random.rand(10)
     prior_probabilities = prior_probabilities / np.sum(prior_probabilities)
@@ -68,10 +68,10 @@ if uploaded_file is not None:
 
     dataframe = pd.read_csv(uploaded_file)
 
-    st.write(dataframe)
+    #st.write(dataframe)
 
     ### Toggle dataframe
-    if st.checkbox('Show dataframe'):
+    if st.sidebar.checkbox('Show patient data'):
         st.sidebar.write(dataframe)
 
     #### Progress bar
@@ -82,10 +82,10 @@ if uploaded_file is not None:
     #   latest_iteration.text(f'Iteration {i+1}')
     #   bar.progress(i + 1)
     #   time.sleep(0.01)
+    # st.write("Analysis successful")
 
     ### Calculate diagnosis
     output_df, prior_probabilities = calculate_diagnosis(dataframe, RFE, symptom_duration)
-    st.write("Analysis successful")
 
     ### Display diagnosis
 
