@@ -2,40 +2,18 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import time
-import matplotlib
 import matplotlib.pyplot as plt
-import altair as alt
+from model import calculate_diagnosis
 
-
+### Settings
 plt.style.use('dark_background')
 np.random.seed(1)
 symptom_duration = 1
 RFE = 'A01'
 
-def calculate_diagnosis(data, RFE, symptom_duration):
-    data_array = data.to_numpy()
-
-    weights = np.random.randn(7,10)
-    bias = np.random.randn(10) + 20*np.array([symptom_duration,0,0,0,0,0,0,0,0,0])
-    output = np.matmul(data_array[:,1],weights) + bias
-    output = output - np.min(output)
-    output = output/np.sum(output)
-    output_df = pd.DataFrame(
-        np.array([['Pneumonia', 'Asthma', 'COPD','Diabetes', 'Bronchitis', 'Cardiac arrest','Embolism','Allergy','COVID','Influenza'],output]).T,
-        columns=['diagnoses', 'probabilities'])
-    #if st.checkbox('Sort diagnosis'):
-    output_df = output_df.sort_values(by=['probabilities'])
-
-    prior_probabilities = np.random.rand(10)
-    prior_probabilities = prior_probabilities / np.sum(prior_probabilities)
-
-    return output_df, prior_probabilities
-
-
-
 ### Display title and description
 st.title('AI for Health demo')
-st.write("This application predicts the most probable diagnosis based on a patients information.")
+st.write("This application predicts the top 10 most probable diagnoses, based on a combination of a patients medical history and most recent symptoms.")
 
 # ### Create dataframe
 # chart_data = pd.DataFrame(
@@ -52,8 +30,6 @@ RFEs = ['A01', 'A02', 'B01', 'C01']
 RFE = st.sidebar.selectbox(
     'Please select an RFE.',
     RFEs)
-
-st.write('You selected: ', RFE)
 
 ### Add slider
 symptom_duration = st.sidebar.slider('Duration of symptoms (days):', 0, 30, 10)
@@ -85,20 +61,30 @@ if uploaded_file is not None:
     # st.write("Analysis successful")
 
     ### Calculate diagnosis
-    output_df, prior_probabilities = calculate_diagnosis(dataframe, RFE, symptom_duration)
+    output_df, prior_probabilities, features_df = calculate_diagnosis(dataframe, RFE, symptom_duration)
 
     ### Display diagnosis
 
     fig1 = plt.figure()
     plt.barh(output_df['diagnoses'], width = output_df['probabilities'],height=0.5)
     fig1.patch.set_alpha(0.0)
+    plt.title('Top 10 most likely diagnoses')
+    plt.xlabel('Probability')
 
     ### Add prior probabilities
-    if st.checkbox('Show prior probabilities'):
+    if st.sidebar.checkbox('Show prior probabilities'):
         for ii in range(10):
             plt.plot([prior_probabilities[ii],prior_probabilities[ii]],[output_df.index[ii]-0.25,output_df.index[ii]+0.25],color='C1',linewidth=5)
 
     plt.xlim(0,0.25)
     st.pyplot(fig1)
 
+    ### Display weights
+    fig2 = plt.figure()
+    plt.barh(features_df['features'], width = features_df['weights'],height=0.5)
+    plt.title('Feature weights')
+    plt.xlabel('Weight')
+    fig2.patch.set_alpha(0.0)
+    plt.xlim(-3,3)
 
+    st.pyplot(fig2)
